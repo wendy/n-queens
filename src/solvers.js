@@ -54,7 +54,8 @@ window.findNQueensSolution = function(n) {
   var nextRowsMJd = [];
   var nextRowsMNd = [];
 
-  debugger;
+  //this search is breadth-first, which is appropriate for .countNQueensSolutions,
+  //but maybe we should rewrite here as depth-first;
   for (var r = 0; r<n; r++){
     //var row = solution.rows()[r];
     // go through the partial solutions passed in by the previous row
@@ -83,6 +84,8 @@ window.findNQueensSolution = function(n) {
     firstRowsMJd = nextRowsMJd;
     firstRowsMNd = nextRowsMNd;
     nextRows = [];
+    nextRowsMJd = [];
+    nextRowsMNd = [];
   }
 
   //write the first solution to matrix format
@@ -101,7 +104,7 @@ window.findNQueensSolution = function(n) {
     return chessBoard;
   } else {
     // may need to wipe board clean
-    return null;
+    return {n:n};
   }
 
       // if you successfully placed the queen, start placing the next queen
