@@ -27,6 +27,7 @@ window.findNRooksSolution = function(num) {
 
 // return the number of nxn chessboards that exist, with n rooks placed such that none of them can attack each other
 window.countNRooksSolutions = function(n) {
+  // return the factorial
   var solutionCount = 1;
   for( var i = 2; i <= n; i++ ){
     solutionCount *= i;
@@ -40,17 +41,15 @@ window.countNRooksSolutions = function(n) {
 
 // return a matrix (an array of arrays) representing a single nxn chessboard, with n queens placed such that none of them can attack each other
 window.findNQueensSolution = function(n) {
-  // wtf are they asking about a 0*0 board for? ah well. oblige them.
-  if(n===0){
-    return {n:0};
-  }
   // 3 sister arrays store partial solutions from
   // placing the first few queens
   var firstRows = [[]];
+  var firstTakenCols = [0];
   var firstRowsMJd = [[]];
   var firstRowsMNd = [[]];
   // partial solutions after adding the next queen
   var nextRows = [];
+  var nextTakenCols = [];
   var nextRowsMJd = [];
   var nextRowsMNd = [];
 
@@ -62,30 +61,39 @@ window.findNQueensSolution = function(n) {
     for (var soln = 0, l = firstRows.length; soln<l; soln++){
       // find all the places where you can put a queen given this partial solution
       var thisPartialSoln = firstRows[soln];
+      var thisTakenCols = firstTakenCols[soln];
       // in this partial solution, which maJor and miNor diagonals were occupied?
       var thisMJd = firstRowsMJd[soln];
       var thisMNd = firstRowsMNd[soln];
+
       for( var c = 0; c < n; c++ ){
+        // an array of 0s, except the cth column from right has a 1 
+        var cBin = 1 << c;
         // test to see whether (r,c) conflicts with existing queens
         // what maJor and miNor diagonals columns intersect this square?
         var mJd = c - r;
         var mNd = c + r;
-        if ( thisPartialSoln.indexOf(c) < 0 &&
+        if ( !(cBin & thisTakenCols) /*thisPartialSoln.indexOf(c) < 0*/ &&
              thisMJd.indexOf(mJd) < 0 &&
              thisMNd.indexOf(mNd) < 0 ){
           // put the queen on the square
+          //debugger;
           nextRows.push( thisPartialSoln.concat(c) );
+          nextTakenCols.push( thisTakenCols | cBin );
           nextRowsMJd.push( thisMJd.concat(mJd) );
           nextRowsMNd.push( thisMNd.concat(mNd) );
         }
       }
     }
     firstRows = nextRows;
+    firstTakenCols = nextTakenCols;
     firstRowsMJd = nextRowsMJd;
     firstRowsMNd = nextRowsMNd;
+
     nextRows = [];
     nextRowsMJd = [];
     nextRowsMNd = [];
+    nextTakenCols = [];
   }
 
   //write the first solution to matrix format
