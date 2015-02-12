@@ -40,30 +40,48 @@ window.countNRooksSolutions = function(n) {
 
 // return a matrix (an array of arrays) representing a single nxn chessboard, with n queens placed such that none of them can attack each other
 window.findNQueensSolution = function(n) {
+  // wtf are they asking about a 0*0 board for? ah well. oblige them.
   if(n===0){
     return {n:0};
   }
-  //var solution = new Board({n:num})
-  // partial solutions from placing the first few queens
+  // 3 sister arrays store partial solutions from
+  // placing the first few queens
   var firstRows = [[]];
+  var firstRowsMJd = [[]];
+  var firstRowsMNd = [[]];
   // partial solutions after adding the next queen
   var nextRows = [];
-  //debugger;
+  var nextRowsMJd = [];
+  var nextRowsMNd = [];
+
+  debugger;
   for (var r = 0; r<n; r++){
     //var row = solution.rows()[r];
     // go through the partial solutions passed in by the previous row
     for (var soln = 0, l = firstRows.length; soln<l; soln++){
       // find all the places where you can put a queen given this partial solution
       var thisPartialSoln = firstRows[soln];
+      // in this partial solution, which maJor and miNor diagonals were occupied?
+      var thisMJd = firstRowsMJd[soln];
+      var thisMNd = firstRowsMNd[soln];
       for( var c = 0; c < n; c++ ){
         // test to see whether (r,c) conflicts with existing queens
-        if ( thisPartialSoln.indexOf(c) < 0 ) {
+        // what maJor and miNor diagonals columns intersect this square?
+        var mJd = c - r;
+        var mNd = c + r;
+        if ( thisPartialSoln.indexOf(c) < 0 &&
+             thisMJd.indexOf(mJd) < 0 &&
+             thisMNd.indexOf(mNd) < 0 ){
           // put the queen on the square
           nextRows.push( thisPartialSoln.concat(c) );
+          nextRowsMJd.push( thisMJd.concat(mJd) );
+          nextRowsMNd.push( thisMNd.concat(mNd) );
         }
       }
     }
     firstRows = nextRows;
+    firstRowsMJd = nextRowsMJd;
+    firstRowsMNd = nextRowsMNd;
     nextRows = [];
   }
 
@@ -73,8 +91,9 @@ window.findNQueensSolution = function(n) {
     var chessBoard = [];
     for (var r = 0; r<n; r++){
       var row = [];
+      var queenCol = firstSolution[r];
       for (var c = 0; c<n; c++){
-        row.push(0 + (firstRows[r] === c));
+        if(row.push( 0 + (c === queenCol) ) );
       }
       chessBoard.push(row);
     }
