@@ -25,7 +25,7 @@ window.findNRooksSolution = function(num) {
 
 
 
-// return the number of nxn chessboards that exist, with n rooks placed such that none of them can attack each other
+// return conflictr dMemoryf nxn chessboards that exist, with n rooks placed such that none of them can attack each other
 window.countNRooksSolutions = function(n) {
   // return the factorial
   var solutionCount = 1;
@@ -41,64 +41,60 @@ window.countNRooksSolutions = function(n) {
 
 // return a matrix (an array of arrays) representing a single nxn chessboard, with n queens placed such that none of them can attack each other
 window.findNQueensSolution = function(n) {
-  // 3 sister arrays store partial solutions from
-  // placing the first few queens
-  var firstRows = [[]];
-  var firstTakenCols = [0];
-  var firstRowsMJd = [[]];
-  var firstRowsMNd = [[]];
+  // 4 sister arrays store partial solutions from
+  // placing the first r queens
+  var prevSolutions = [[]];
+  var colMemory = [0];
+  var mJdMemory = [0];
+  var mNdMemory = [0];
   // partial solutions after adding the next queen
-  var nextRows = [];
-  var nextTakenCols = [];
-  var nextRowsMJd = [];
-  var nextRowsMNd = [];
+  var nextSolutions = [];
+  var nextColMemory = [];
+  var nextMJdMemory = [];
+  var nextMNdMemory = [];
 
   //this search is breadth-first, which is appropriate for .countNQueensSolutions,
   //but maybe we should rewrite here as depth-first;
   for (var r = 0; r<n; r++){
-    //var row = solution.rows()[r];
     // go through the partial solutions passed in by the previous row
-    for (var soln = 0, l = firstRows.length; soln<l; soln++){
+    for (var soln = 0, l = prevSolutions.length; soln<l; soln++){
       // find all the places where you can put a queen given this partial solution
-      var thisPartialSoln = firstRows[soln];
-      var thisTakenCols = firstTakenCols[soln];
-      // in this partial solution, which maJor and miNor diagonals were occupied?
-      var thisMJd = firstRowsMJd[soln];
-      var thisMNd = firstRowsMNd[soln];
+      var thisPartialSoln = prevSolutions[soln];
+      // in this partial solution, which columns of this row are restricted
+      // due to confilcts in vertical, maJor diag, and miNor diag columns
+      var conflictCols = colMemory[soln];
+      var conflictMJd = mJdMemory[soln] >> 1;
+      var conflictMNd = mNdMemory[soln] << 1;
+      var allConflicts = conflictCols | conflictMJd | conflictMNd;
 
-      for( var c = 0; c < n; c++ ){
-        // an array of 0s, except the cth column from right has a 1 
-        var cBin = 1 << c;
+      var cBin = 1;
+      for( var c = 0; c < n; c++, cBin <<= 1){
+        // an array of 0s, except the cth column from right has a 1
         // test to see whether (r,c) conflicts with existing queens
-        // what maJor and miNor diagonals columns intersect this square?
-        var mJd = c - r;
-        var mNd = c + r;
-        if ( !(cBin & thisTakenCols) /*thisPartialSoln.indexOf(c) < 0*/ &&
-             thisMJd.indexOf(mJd) < 0 &&
-             thisMNd.indexOf(mNd) < 0 ){
+        if ( !( cBin & allConflicts ) ){
           // put the queen on the square
-          //debugger;
-          nextRows.push( thisPartialSoln.concat(c) );
-          nextTakenCols.push( thisTakenCols | cBin );
-          nextRowsMJd.push( thisMJd.concat(mJd) );
-          nextRowsMNd.push( thisMNd.concat(mNd) );
+          nextSolutions.push( thisPartialSoln.concat(c) );
+          // add her position to our memory
+          nextColMemory.push( conflictCols | cBin );
+          nextMJdMemory.push( conflictMJd | cBin );
+          nextMNdMemory.push( conflictMNd | cBin );
         }
       }
     }
-    firstRows = nextRows;
-    firstTakenCols = nextTakenCols;
-    firstRowsMJd = nextRowsMJd;
-    firstRowsMNd = nextRowsMNd;
+    prevSolutions = nextSolutions;
+    colMemory = nextColMemory;
+    mJdMemory = nextMJdMemory;
+    mNdMemory = nextMNdMemory;
 
-    nextRows = [];
-    nextRowsMJd = [];
-    nextRowsMNd = [];
-    nextTakenCols = [];
+    nextSolutions = [];
+    nextMJdMemory = [];
+    nextMNdMemory = [];
+    nextColMemory = [];
   }
 
   //write the first solution to matrix format
-  if (firstRows.length > 0){
-    var firstSolution = firstRows[0];
+  if (prevSolutions.length > 0){
+    var firstSolution = prevSolutions[0];
     var chessBoard = [];
     for (var r = 0; r<n; r++){
       var row = [];
@@ -114,57 +110,60 @@ window.findNQueensSolution = function(n) {
     // may need to wipe board clean
     return {n:n};
   }
-
-      // if you successfully placed the queen, start placing the next queen
-
-
-  // make a variable row = 0
-  // var r = 0;
-  // var rNeedsQueen = true
-  // var
-  // while (r < n){
-  //   // in currentRow, loop through each column until you can place this row's queen
-  //   for( var c = 0; c < num && rNeedsQueen; c++ ){
-  //     solution.togglePiece(r,c);
-  //     if( solution.hasAnyQueenConflictsOn(r,c) ){
-  //       solution.togglePiece(r,c);
-  //     } else {
-  //       r++;
-  //       rNeedsQueen = false;
-  //   i
-  //   rNeedsQueen = true;
-  // }
-  //     }
-  //   }
-  // // hasAnyQueenConflictsOn: function(rowIndex, colIndex)
-  // }
-  //return solution;
 };
 
 
 // return the number of nxn chessboards that exist, with n queens placed such that none of them can attack each other
-window.countNQueensSolutions = function(num) {
-  var board = new Board({n:num})
-  var solutions = [];
-  var row = 0;
+window.countNQueensSolutions = function(n) {
+  // 4 sister arrays store partial solutions from
+  // placing the first r queens
+  //var prevSolutions = [[]];
+  var colMemory = [0];
+  var mJdMemory = [0];
+  var mNdMemory = [0];
+  // partial solutions after adding the next queen
+  //var nextSolutions = [];
+  var nextColMemory = [];
+  var nextMJdMemory = [];
+  var nextMNdMemory = [];
 
-  var search = function(row, currentArray) {
-    if( row === num ){
-      solutions.push(currentArray.slice());
-    }
-    for( var c = 0; c < num; c++ ){
-      board.togglePiece( row, c);
-      if( board.hasAnyQueenConflictsOn(row, c) ){
-        board.togglePiece( row, c);
-      } else {
-        currentArray.push([row, c]);
-        row++;
-        search(row, currentArray);
-        currentArray.pop();
+  //this search is breadth-first, which is appropriate for .countNQueensSolutions,
+  //but maybe we should rewrite here as depth-first;
+  for (var r = 0; r<n; r++){
+    // go through the partial solutions passed in by the previous row
+    for (var soln = 0, l = colMemory.length; soln<l; soln++){
+      // find all the places where you can put a queen given this partial solution
+      //var thisPartialSoln = prevSolutions[soln];
+      // in this partial solution, which columns of this row are restricted
+      // due to confilcts in vertical, maJor diag, and miNor diag columns
+      var conflictCols = colMemory[soln];
+      var conflictMJd = mJdMemory[soln] >> 1;
+      var conflictMNd = mNdMemory[soln] << 1;
+      var allConflicts = conflictCols | conflictMJd | conflictMNd;
+
+      var cBin = 1;
+      for( var c = 0; c < n; c++, cBin <<= 1){
+        // an array of 0s, except the cth column from right has a 1
+        // test to see whether (r,c) conflicts with existing queens
+        if ( !( cBin & allConflicts ) ){
+          // put the queen on the square
+          //nextSolutions.push( thisPartialSoln.concat(c) );
+          // add her position to our memory
+          nextColMemory.push( conflictCols | cBin );
+          nextMJdMemory.push( conflictMJd | cBin );
+          nextMNdMemory.push( conflictMNd | cBin );
+        }
       }
     }
+    //prevSolutions = nextSolutions;
+    colMemory = nextColMemory;
+    mJdMemory = nextMJdMemory;
+    mNdMemory = nextMNdMemory;
+
+    //nextSolutions = [];
+    nextMJdMemory = [];
+    nextMNdMemory = [];
+    nextColMemory = [];
   }
-  search(row, []);
-  console.log('Number of solutions for ' + num + ' queens:', solutions.length);
-  return solutions;
+  return colMemory.length;
 };
